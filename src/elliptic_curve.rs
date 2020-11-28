@@ -1,11 +1,13 @@
-pub trait FieldElement:
+pub trait FieldElement<T = Self>:
   std::cmp::PartialEq
   + std::cmp::Eq
-  + std::ops::Add
-  + std::ops::Sub
-  + std::ops::Neg
-  + std::ops::Mul
-  + std::ops::Div
+  + std::ops::Add<Output = T>
+  + std::ops::Sub<Output = T>
+  + std::ops::Neg<Output = T>
+  + std::ops::Mul<Output = T>
+  + std::ops::Div<Output = T>
+  + std::fmt::Debug
+  + Copy
   + Sized
 {
 }
@@ -56,10 +58,7 @@ impl<T: FieldElement> std::ops::Neg for EllipticCurvePoint<T> {
   }
 }
 
-impl<T> std::ops::Add for EllipticCurvePoint<T>
-where
-  T: FieldElement + std::fmt::Debug,
-{
+impl<T: FieldElement> std::ops::Add for EllipticCurvePoint<T> {
   type Output = EllipticCurvePoint<T>;
 
   fn add(self, other: Self) -> Self {
@@ -77,6 +76,30 @@ where
 
     if self.x == other.x && self.y != other.y {
       return Self::zero(self.a, self.b);
+    }
+
+    let sx = self.x.unwrap();
+    let sy = self.y.unwrap();
+    let ox = other.x.unwrap();
+    let oy = other.y.unwrap();
+    let y_zero = sy - sy;
+
+    if self.x != other.x {
+      let s = (oy - sy) / (ox - sx);
+      let x = s * s - sx - ox;
+      let y = s * (sx - x) - sy;
+      return Self::new(x, y, self.a, self.b);
+    }
+
+    if self == other && self.y == Some(y_zero) {
+      return Self::zero(self.a, self.b);
+    }
+
+    if self == other {
+      let s = ((sx * sx) + (sx * sx) + (sx * sx) + self.a) / (sy + sy);
+      let x = s * s - sx - sx;
+      let y = s * (sx - x) - sy;
+      return Self::new(x, y, self.a, self.b);
     }
 
     todo!();
@@ -107,16 +130,16 @@ mod tests {
     assert_eq!(b + c, a);
   }
 
-  // #[test]
-  // fn test_add1() {
-  //   let a = EllipticCurvePoint::new(3, 7, 5, 7);
-  //   let b = EllipticCurvePoint::new(-1, -1, 5, 7);
-  //   assert_eq!(a + b, EllipticCurvePoint::new(2, -5, 5, 7));
-  // }
+  #[test]
+  fn test_add1() {
+    let a = EllipticCurvePoint::new(3, 7, 5, 7);
+    let b = EllipticCurvePoint::new(-1, -1, 5, 7);
+    assert_eq!(a + b, EllipticCurvePoint::new(2, -5, 5, 7));
+  }
 
-  // #[test]
-  // fn test_add2() {
-  //   let a = EllipticCurvePoint::new(-1, -1, 5, 7);
-  //   assert_eq!(a + a, EllipticCurvePoint::new(18, 77, 5, 7),);
-  // }
+  #[test]
+  fn test_add2() {
+    let a = EllipticCurvePoint::new(-1, -1, 5, 7);
+    assert_eq!(a + a, EllipticCurvePoint::new(18, 77, 5, 7));
+  }
 }

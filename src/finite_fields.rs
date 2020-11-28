@@ -34,7 +34,7 @@ impl std::cmp::Eq for FiniteFieldElement {}
 impl std::ops::Add for FiniteFieldElement {
   type Output = Self;
 
-  fn add(self, other: Self) -> Self {
+  fn add(self, other: Self) -> Self::Output {
     if self.prime != other.prime {
       panic!("Cannot add two elements from different finite fields");
     }
@@ -47,7 +47,7 @@ impl std::ops::Add for FiniteFieldElement {
 impl std::ops::Sub for FiniteFieldElement {
   type Output = Self;
 
-  fn sub(self, other: Self) -> Self {
+  fn sub(self, other: Self) -> Self::Output {
     if self.prime != other.prime {
       panic!("Cannot subtract two elements from different finite fields");
     }
@@ -60,7 +60,7 @@ impl std::ops::Sub for FiniteFieldElement {
 impl std::ops::Neg for FiniteFieldElement {
   type Output = Self;
 
-  fn neg(self) -> Self {
+  fn neg(self) -> Self::Output {
     Self::new(self.prime - self.index, self.prime)
   }
 }
@@ -68,7 +68,7 @@ impl std::ops::Neg for FiniteFieldElement {
 impl std::ops::Mul for FiniteFieldElement {
   type Output = Self;
 
-  fn mul(self, other: Self) -> Self {
+  fn mul(self, other: Self) -> Self::Output {
     if self.prime != other.prime {
       panic!("Cannot multiply two elements from different finite fields");
     }
@@ -81,7 +81,7 @@ impl std::ops::Mul for FiniteFieldElement {
 impl std::ops::Div for FiniteFieldElement {
   type Output = Self;
 
-  fn div(self, other: Self) -> Self {
+  fn div(self, other: Self) -> Self::Output {
     if self.prime != other.prime {
       panic!("Cannot divide two elements from different finite fields");
     }
