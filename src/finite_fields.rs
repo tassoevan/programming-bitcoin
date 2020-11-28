@@ -9,15 +9,16 @@ impl FiniteFieldElement {
     if index >= prime {
       panic!("index {:?} not in field range 0 to {:?}", index, prime - 1);
     }
+
     FiniteFieldElement { index, prime }
   }
 
-  pub fn pow(self, exponent: i32) -> FiniteFieldElement {
+  fn pow(&self, exponent: i32) -> FiniteFieldElement {
     match exponent {
       0 => FiniteFieldElement::new(1, self.prime),
-      1 => self,
+      1 => *self,
       i if i < 0 => self.pow(self.prime as i32 - 1 + i),
-      _ => self * self.pow(exponent - 1),
+      _ => *self * self.pow(exponent - 1),
     }
   }
 }
@@ -51,8 +52,16 @@ impl std::ops::Sub for FiniteFieldElement {
       panic!("Cannot subtract two elements from different finite fields");
     }
 
-    let index = (self.index as i64 - other.index as i64).rem_euclid(self.prime as i64);
+    let index = (self.index as i128 - other.index as i128).rem_euclid(self.prime as i128);
     Self::new(index as u64, self.prime)
+  }
+}
+
+impl std::ops::Neg for FiniteFieldElement {
+  type Output = Self;
+
+  fn neg(self) -> Self {
+    Self::new(self.prime - self.index, self.prime)
   }
 }
 
