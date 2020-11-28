@@ -28,6 +28,8 @@ impl std::cmp::PartialEq for FiniteFieldElement {
   }
 }
 
+impl std::cmp::Eq for FiniteFieldElement {}
+
 impl std::ops::Add for FiniteFieldElement {
   type Output = Self;
 
