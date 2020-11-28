@@ -1,4 +1,4 @@
-This repository serves the education purpose of learning Rust. The code here is a reproduction of examples and exercises Jimmy Song's _Programming Bitcoin_, originally written in Python.
+This repository serves the education purpose of learning Rust. The code here is a reproduction of examples and exercises from Jimmy Song's _Programming Bitcoin_, originally written in Python.
 
 To run:
 
