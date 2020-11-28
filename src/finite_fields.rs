@@ -1,15 +1,24 @@
 #[derive(Debug, Clone, Copy)]
 pub struct FiniteFieldElement {
-  index: i64,
-  prime: i64,
+  index: u64,
+  prime: u64,
 }
 
 impl FiniteFieldElement {
-  pub fn new(index: i64, prime: i64) -> FiniteFieldElement {
-    if index >= prime || index < 0 {
+  pub fn new(index: u64, prime: u64) -> FiniteFieldElement {
+    if index >= prime {
       panic!("index {:?} not in field range 0 to {:?}", index, prime - 1);
     }
     FiniteFieldElement { index, prime }
+  }
+
+  pub fn pow(self, exponent: i32) -> FiniteFieldElement {
+    match exponent {
+      0 => FiniteFieldElement::new(1, self.prime),
+      1 => self,
+      i if i < 0 => self.pow(self.prime as i32 - 1 + i),
+      _ => self * self.pow(exponent - 1)
+    }
   }
 }
 
@@ -20,29 +29,53 @@ impl std::cmp::PartialEq for FiniteFieldElement {
 }
 
 impl std::ops::Add for FiniteFieldElement {
-  type Output = FiniteFieldElement;
+  type Output = Self;
 
-  fn add(self, other: FiniteFieldElement) -> FiniteFieldElement {
+  fn add(self, other: Self) -> Self {
     if self.prime != other.prime {
       panic!("Cannot add two elements from different finite fields");
     }
 
-    let index = (self.index + other.index) % self.prime;
-    FiniteFieldElement::new(index, self.prime)
+    let index = (self.index + other.index).rem_euclid(self.prime);
+    Self::new(index, self.prime)
   }
 }
 
 impl std::ops::Sub for FiniteFieldElement {
-  type Output = FiniteFieldElement;
+  type Output = Self;
 
-  fn sub(self, other: FiniteFieldElement) -> FiniteFieldElement {
+  fn sub(self, other: Self) -> Self {
     if self.prime != other.prime {
       panic!("Cannot subtract two elements from different finite fields");
     }
 
-    let remainder = (self.index - other.index) % self.prime; // can be negative
-    let index = (remainder + self.prime) % self.prime;
-    FiniteFieldElement::new(index, self.prime)
+    let index = (self.index as i64 - other.index as i64).rem_euclid(self.prime as i64);
+    Self::new(index as u64, self.prime)
+  }
+}
+
+impl std::ops::Mul for FiniteFieldElement {
+  type Output = Self;
+
+  fn mul(self, other: Self) -> Self {
+    if self.prime != other.prime {
+      panic!("Cannot multiply two elements from different finite fields");
+    }
+
+    let index = (self.index * other.index).rem_euclid(self.prime);
+    Self::new(index, self.prime)
+  }
+}
+
+impl std::ops::Div for FiniteFieldElement {
+  type Output = Self;
+
+  fn div(self, other: Self) -> Self {
+    if self.prime != other.prime {
+      panic!("Cannot divide two elements from different finite fields");
+    }
+
+    self * other.pow(-1)
   }
 }
 
@@ -87,5 +120,36 @@ mod tests {
       let a = FiniteFieldElement::new(15, 31);
       let b = FiniteFieldElement::new(30, 31);
       assert_eq!(a - b, FiniteFieldElement::new(16, 31));
+    }
+
+    #[test]
+    fn test_mul() {
+      let a = FiniteFieldElement::new(24, 31);
+      let b = FiniteFieldElement::new(19, 31);
+      assert_eq!(a * b, FiniteFieldElement::new(22, 31));
+    }
+
+    #[test]
+    fn test_pow() {
+      let a = FiniteFieldElement::new(17, 31);
+      assert_eq!(a.pow(3), FiniteFieldElement::new(15, 31));
+
+      let a = FiniteFieldElement::new(5, 31);
+      let b = FiniteFieldElement::new(18, 31);
+      assert_eq!(a.pow(5) * b, FiniteFieldElement::new(16, 31));
+    }
+
+    #[test]
+    fn test_div() {
+      let a = FiniteFieldElement::new(3, 31);
+      let b = FiniteFieldElement::new(24, 31);
+      assert_eq!(a / b, FiniteFieldElement::new(4, 31));
+
+      let a = FiniteFieldElement::new(17, 31);
+      assert_eq!(a.pow(-3), FiniteFieldElement::new(29, 31));
+
+      let a = FiniteFieldElement::new(4, 31);
+      let b = FiniteFieldElement::new(11, 31);
+      assert_eq!(a.pow(-4) * b, FiniteFieldElement::new(13, 31));
     }
 }
