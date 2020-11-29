@@ -1,11 +1,14 @@
+use std::cmp::*;
+use std::ops::*;
+
 pub trait FieldElement<T = Self>:
-  std::cmp::PartialEq
-  + std::cmp::Eq
-  + std::ops::Add<Output = T>
-  + std::ops::Sub<Output = T>
-  + std::ops::Neg<Output = T>
-  + std::ops::Mul<Output = T>
-  + std::ops::Div<Output = T>
+  PartialEq
+  + Eq
+  + Add<Output = T>
+  + Sub<Output = T>
+  + Neg<Output = T>
+  + Mul<Output = T>
+  + Div<Output = T>
   + std::fmt::Debug
   + Copy
   + Sized
@@ -13,13 +16,13 @@ pub trait FieldElement<T = Self>:
 }
 
 impl<T> FieldElement for T where
-  T: std::cmp::PartialEq
-    + std::cmp::Eq
-    + std::ops::Add<Output = T>
-    + std::ops::Sub<Output = T>
-    + std::ops::Neg<Output = T>
-    + std::ops::Mul<Output = T>
-    + std::ops::Div<Output = T>
+  T: PartialEq
+    + Eq
+    + Add<Output = T>
+    + Sub<Output = T>
+    + Neg<Output = T>
+    + Mul<Output = T>
+    + Div<Output = T>
     + std::fmt::Debug
     + Copy
 {
@@ -44,12 +47,20 @@ impl<T: FieldElement> EllipticCurvePoint<T> {
     Self::NonZero { x, y, a, b }
   }
 
+  pub fn new_check(x: T, y: T, a: T, b: T) -> Result<Self, ()> {
+    if y * y == x * x * x + a * x + b {
+      return Ok(Self::NonZero { x, y, a, b });
+    }
+
+    Err(())
+  }
+
   pub fn zero(a: T, b: T) -> Self {
     Self::Zero { a, b }
   }
 }
 
-impl<T: FieldElement> std::ops::Add for EllipticCurvePoint<T> {
+impl<T: FieldElement> Add for EllipticCurvePoint<T> {
   type Output = Self;
 
   fn add(self, other: Self) -> Self {
@@ -111,6 +122,20 @@ impl<T: FieldElement> std::ops::Add for EllipticCurvePoint<T> {
   }
 }
 
+impl<T: FieldElement> Mul<EllipticCurvePoint<T>> for u32 {
+  type Output = EllipticCurvePoint<T>;
+
+  fn mul(self, point: EllipticCurvePoint<T>) -> EllipticCurvePoint<T> {
+    match self {
+      0 => match point {
+        EllipticCurvePoint::Zero { a, b } => EllipticCurvePoint::zero(a, b),
+        EllipticCurvePoint::NonZero { x: _, y: _, a, b } => EllipticCurvePoint::zero(a, b),
+      },
+      i => point + (i - 1) * point,
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -144,5 +169,92 @@ mod tests {
   fn test_add2() {
     let a = EllipticCurvePoint::new(-1, -1, 5, 7);
     assert_eq!(a + a, EllipticCurvePoint::new(18, 77, 5, 7));
+  }
+
+  #[test]
+  fn test_finite_field_validation() {
+    use super::super::finite_field::FiniteFieldElement;
+
+    let prime = 223;
+    let a = FiniteFieldElement::new(0, prime);
+    let b = FiniteFieldElement::new(7, prime);
+
+    let pt = |x, y| {
+      EllipticCurvePoint::new_check(
+        FiniteFieldElement::new(x, prime),
+        FiniteFieldElement::new(y, prime),
+        a,
+        b,
+      )
+    };
+
+    let valid_points = vec![pt(192, 105), pt(17, 56), pt(1, 193)];
+    for p in valid_points.into_iter() {
+      assert!(p.is_ok());
+    }
+
+    let invalid_points = vec![pt(200, 119), pt(42, 99)];
+    for p in invalid_points.into_iter() {
+      assert!(p.is_err());
+    }
+  }
+
+  #[test]
+  fn test_finite_field_add() {
+    use super::super::finite_field::FiniteFieldElement;
+
+    let prime = 223;
+    let a = FiniteFieldElement::new(0, prime);
+    let b = FiniteFieldElement::new(7, prime);
+
+    let pt = |x, y| {
+      EllipticCurvePoint::new(
+        FiniteFieldElement::new(x, prime),
+        FiniteFieldElement::new(y, prime),
+        a,
+        b,
+      )
+    };
+
+    let additions = vec![
+      (pt(192, 105), pt(17, 56), pt(170, 142)),
+      (pt(47, 71), pt(117, 141), pt(60, 139)),
+      (pt(143, 98), pt(76, 66), pt(47, 71)),
+    ];
+
+    for (p1, p2, p3) in additions.into_iter() {
+      assert_eq!(p1 + p2, p3);
+    }
+  }
+
+  #[test]
+  fn test_finite_field_rmul() {
+    use super::super::finite_field::FiniteFieldElement;
+
+    let prime = 223;
+    let a = FiniteFieldElement::new(0, prime);
+    let b = FiniteFieldElement::new(7, prime);
+
+    let pt = |x, y| {
+      EllipticCurvePoint::new(
+        FiniteFieldElement::new(x, prime),
+        FiniteFieldElement::new(y, prime),
+        a,
+        b,
+      )
+    };
+
+    let multiplications = vec![
+      (2, pt(192, 105), pt(49, 71)),
+      (2, pt(143, 98), pt(64, 168)),
+      (2, pt(47, 71), pt(36, 111)),
+      (4, pt(47, 71), pt(194, 51)),
+      (8, pt(47, 71), pt(116, 55)),
+      (21, pt(47, 71), EllipticCurvePoint::zero(a, b)),
+    ];
+
+    for (s, p1, p2) in multiplications.into_iter() {
+      assert_eq!(s * p1, p2);
+    }
   }
 }
