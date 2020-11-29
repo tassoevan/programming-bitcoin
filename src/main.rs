@@ -1,7 +1,7 @@
 mod elliptic_curve;
-mod finite_fields;
+mod finite_field;
 
-use finite_fields::FiniteFieldElement;
+use finite_field::FiniteFieldElement;
 
 fn main() {
   println!("Hello, world!");

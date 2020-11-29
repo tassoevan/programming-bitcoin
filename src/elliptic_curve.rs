@@ -12,7 +12,20 @@ pub trait FieldElement<T = Self>:
 {
 }
 
-#[derive(Debug, Clone, Copy)]
+impl<T> FieldElement for T where
+  T: std::cmp::PartialEq
+    + std::cmp::Eq
+    + std::ops::Add<Output = T>
+    + std::ops::Sub<Output = T>
+    + std::ops::Neg<Output = T>
+    + std::ops::Mul<Output = T>
+    + std::ops::Div<Output = T>
+    + std::fmt::Debug
+    + Copy
+{
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EllipticCurvePoint<T: FieldElement> {
   x: Option<T>,
   y: Option<T>,
@@ -41,20 +54,6 @@ impl<T: FieldElement> EllipticCurvePoint<T> {
 
   pub fn is_zero(&self) -> bool {
     self.x == None || self.y == None
-  }
-}
-
-impl<T: FieldElement> std::cmp::PartialEq for EllipticCurvePoint<T> {
-  fn eq(&self, other: &Self) -> bool {
-    self.a == other.a && self.b == other.b && self.x == other.x && self.y == other.y
-  }
-}
-
-impl<T: FieldElement> std::ops::Neg for EllipticCurvePoint<T> {
-  type Output = Self;
-
-  fn neg(self) -> Self {
-    self
   }
 }
 
@@ -109,8 +108,6 @@ impl<T: FieldElement> std::ops::Add for EllipticCurvePoint<T> {
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  impl FieldElement for i64 {}
 
   #[test]
   fn test_eq() {
