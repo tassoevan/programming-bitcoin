@@ -2,22 +2,30 @@ use std::ops::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FiniteFieldElement {
-  index: u32,
-  prime: u32,
+  pub index: u32,
+  pub prime: u32,
 }
 
 impl FiniteFieldElement {
   pub fn new(index: u32, prime: u32) -> Self {
-    if index >= prime {
-      panic!("index {:?} not in field range 0 to {:?}", index, prime - 1);
-    }
+    let range = 0..prime;
+    assert!(
+      range.contains(&index),
+      "index {:?} not in field range {:?}",
+      index,
+      range
+    );
+    assert!(prime > 0, "prime shold be greater than zero");
 
     Self { index, prime }
   }
 
   fn pow(self, exponent: i32) -> Self {
     match exponent {
-      0 => Self::new(1, self.prime),
+      0 => Self {
+        index: 1,
+        prime: self.prime,
+      },
       1 => self,
       i if i < 0 => self.pow(self.prime as i32 - 1 + i),
       _ => self * self.pow(exponent - 1),
@@ -34,7 +42,10 @@ impl Add for FiniteFieldElement {
     }
 
     let index = (self.index + other.index).rem_euclid(self.prime);
-    Self::new(index, self.prime)
+    Self {
+      index,
+      prime: self.prime,
+    }
   }
 }
 
@@ -51,7 +62,10 @@ impl Sub for FiniteFieldElement {
       false => self.index - other.index,
     };
 
-    Self::new(index, self.prime)
+    Self {
+      index,
+      prime: self.prime,
+    }
   }
 }
 
@@ -59,7 +73,10 @@ impl Neg for FiniteFieldElement {
   type Output = Self;
 
   fn neg(self) -> Self {
-    Self::new(self.prime - self.index, self.prime)
+    Self {
+      index: self.prime - self.index,
+      prime: self.prime,
+    }
   }
 }
 
@@ -72,7 +89,10 @@ impl Mul for FiniteFieldElement {
     }
 
     let index = (self.index * other.index).rem_euclid(self.prime);
-    Self::new(index, self.prime)
+    Self {
+      index,
+      prime: self.prime,
+    }
   }
 }
 
