@@ -17,13 +17,13 @@ fn main() {
     b,
   );
   let nG = EllipticCurvePoint::zero(a, b);
-  let mut iG = G;
   let mut i = 1;
-  while iG != nG {
-    println!("{}G = {}", i, iG);
-    iG = iG + G;
+  while i * G != nG {
+    println!("{}G = {}", i, i * G);
     i = i + 1;
   }
-  println!("{}G = {}", i, iG);
+  println!("{}G = {}", i, i * G);
   println!("the order is {}", i);
+
+  println!("{}G = {}", 100000, 100000 * G);
 }

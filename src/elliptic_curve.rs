@@ -135,13 +135,20 @@ impl<T: FieldElement> Mul<EllipticCurvePoint<T>> for u32 {
   type Output = EllipticCurvePoint<T>;
 
   fn mul(self, point: EllipticCurvePoint<T>) -> EllipticCurvePoint<T> {
-    match self {
-      0 => match point {
-        EllipticCurvePoint::Zero { a, b } => EllipticCurvePoint::zero(a, b),
-        EllipticCurvePoint::NonZero { x: _, y: _, a, b } => EllipticCurvePoint::zero(a, b),
-      },
-      i => point + (i - 1) * point,
+    let mut coef = self;
+    let mut current = point;
+    let mut result = match point {
+      EllipticCurvePoint::Zero { a, b } => EllipticCurvePoint::zero(a, b),
+      EllipticCurvePoint::NonZero { x: _, y: _, a, b } => EllipticCurvePoint::zero(a, b),
+    };
+    while coef > 0 {
+      if coef & 1 == 1 {
+        result = result + current;
+      }
+      current = current + current;
+      coef >>= 1;
     }
+    result
   }
 }
 
