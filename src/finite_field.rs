@@ -33,6 +33,12 @@ impl FiniteFieldElement {
   }
 }
 
+impl std::fmt::Display for FiniteFieldElement {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+    write!(f, "{}_{}", self.index, self.prime)
+  }
+}
+
 impl Add for FiniteFieldElement {
   type Output = Self;
 

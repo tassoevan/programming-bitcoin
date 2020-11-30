@@ -4,15 +4,26 @@ mod finite_field;
 use elliptic_curve::EllipticCurvePoint;
 use finite_field::FiniteFieldElement;
 
+#[allow(non_snake_case)]
 fn main() {
-  println!("Hello, world!");
-  println!(
-    "This is a finite field element: {:?}",
-    FiniteFieldElement::new(0, 1),
+  let prime = 223;
+  let a = FiniteFieldElement::new(0, prime);
+  let b = FiniteFieldElement::new(7, prime);
+
+  let G = EllipticCurvePoint::new(
+    FiniteFieldElement::new(15, prime),
+    FiniteFieldElement::new(86, prime),
+    a,
+    b,
   );
-  println!(
-    "These are elliptic curve points: {:?} {:?}",
-    EllipticCurvePoint::new(3, 7, 5, 7),
-    EllipticCurvePoint::zero(5, 7)
-  );
+  let nG = EllipticCurvePoint::zero(a, b);
+  let mut iG = G;
+  let mut i = 1;
+  while iG != nG {
+    println!("{}G = {}", i, iG);
+    iG = iG + G;
+    i = i + 1;
+  }
+  println!("{}G = {}", i, iG);
+  println!("the order is {}", i);
 }

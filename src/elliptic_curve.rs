@@ -60,6 +60,15 @@ impl<T: FieldElement> EllipticCurvePoint<T> {
   }
 }
 
+impl<T: FieldElement + std::fmt::Display> std::fmt::Display for EllipticCurvePoint<T> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+    match self {
+      Self::Zero { a, b } => write!(f, "at infinity of ({}, {})", a, b),
+      Self::NonZero { x, y, a, b } => write!(f, "({}, {}) over ({}, {})", x, y, a, b),
+    }
+  }
+}
+
 impl<T: FieldElement> Add for EllipticCurvePoint<T> {
   type Output = Self;
 
